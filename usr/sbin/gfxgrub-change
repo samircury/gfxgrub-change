@@ -1,0 +1,107 @@
+#!/bin/bash
+# Copyright (c) 2009 Samir Cury
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+
+
+#in the future can support "s" - sound and "h" help
+
+#here we check if image or sound was called, if not, no sense to use the command:
+
+init_dir=`pwd`
+
+if [ -z $1 ] && [ -z $2 ]
+        then
+                echo "Usage : gfxgrub-change -i image.jpg"
+fi
+
+
+while getopts ":i:h:s:c:f:" opt; do
+  case $opt in
+
+    f)
+	rm -f /boot/gfxmenu/default.message
+	ln -s /boot/gfxmenu/gnome.message /boot/gfxmenu/default.message
+    ;;	
+
+    h)
+	custom="set"
+	custom_res=$OPTARG
+
+    ;;
+
+
+    i)
+        #here is where we set the image that will be changed to
+
+        file=$(readlink -f $OPTARG)
+
+
+        mkdir grub_workdir
+        cd grub_workdir
+
+        if [ ! -e $file ]
+                then
+                        echo "i can't see the file you pointed.. check permissions and if the file even exists..."
+                        cd .. 
+                        rm -Rf grub_workdir 
+                        exit 1 
+        fi 
+
+
+        cpio -i </boot/gfxmenu/default.message
+
+	resolution=$(identify back.jpg | awk -F" " '{print $3}')
+
+        cp $file convert.jpg
+
+	if [ -z $custom ]
+		then
+	        	convert -resize $resolution! convert.jpg back.jpg
+	fi
+	if [ -n $custom ]
+		then
+			convert -resize $custom_res! convert.jpg back.jpg
+	fi
+	
+
+        rm -f convert.jpg
+
+        find . | cpio -o >/boot/gfxmenu/gfxgrub-change.message
+
+        cd /boot/gfxmenu/
+
+        rm default.message
+
+        ln -s gfxgrub-change.message default.message
+
+        cd $init_dir
+
+        rm -Rf grub_workdir
+      ;;
+#    h)
+#       help()
+#      ;;
+  esac
+done
+
+
+exit 0
+

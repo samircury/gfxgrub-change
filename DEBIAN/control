@@ -1,0 +1,8 @@
+Package: gfxgrub-change
+Version: 0.3.6
+Section: base
+Priority: optional
+Architecture: all
+Depends: bash , grub-gfxboot , imagemagick
+Maintainer: Samir Cury < rimasy at gmail dot com >
+Description: Tool to easily change the picture at boot time (grub)
